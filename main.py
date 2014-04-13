@@ -18,4 +18,4 @@ grid1 = [
 
 sudoku = Grid(grid1)
 
-print(sudoku)
+print(sudoku.solve())
