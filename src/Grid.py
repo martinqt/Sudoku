@@ -14,12 +14,21 @@ class Grid():
 
     def __init__(self, grid):
         self.grid = grid
-        self.isSolved = False
+        self.solved = False
 
     def toString(self, raw):
         """Generate the string representation of the grid."""
+        string = 'Status: '
+
+        if self.solved == True:
+            string += colors.okgreen+'Solved'+colors.end
+        else:
+            string += colors.fail+'Unsolved'+colors.end
+
+        string += '\n'
+
         if raw == False:
-            string = colors.okblue+'\n-------------\n'+colors.end
+            string += colors.okblue+'\n-------------\n'+colors.end
 
             for row in range(9):
                 for column in range(9):
@@ -39,9 +48,9 @@ class Grid():
                 else:
                     string += '\n'
         else:
-            string = '\n'
+            string += '\n'
             for row in self.grid:
-                string += row.__str__()+'\n'
+                string += row.__str__()+colors.header+'|'+colors.end+'\n'
 
         return string
 
@@ -55,6 +64,9 @@ class Grid():
                     self.grid[row][column] = list(choices)
 
         return 0
+
+    def removeFromList(self, mlist, value):
+        return [val for val in mlist if val != value]
 
     def get(self, row, column):
         """Get the requested cell."""
@@ -78,10 +90,18 @@ class Grid():
 
     def clearColumn(self, column, value):
         """Remove value as a possible choice for the column."""
+        for row in range(9):
+            if not self.isSet(row, column):
+                self.grid[row][column] = self.removeFromList(self.get(row, column), value)
+
         return 0
 
     def clearRow(self, row, value):
         """Remove value as a possible choice for the row."""
+        for column in range(9):
+            if not self.isSet(row, column):
+                self.grid[row][column] = self.removeFromList(self.get(row, column), value)
+
         return 0
 
     def clearSquare(self, row, column, value):
@@ -97,9 +117,30 @@ class Grid():
 
         return 0
 
+    def validate(self):
+        """Remove list of choices with only one choice and check if the grid has been solved."""
+        notFound = 0
+
+        for row in range(9):
+            for column in range(9):
+                if not isinstance(self.get(row, column), int):
+                    if len(self.get(row, column)) == 1:
+                        self.grid[row][column] = int(self.get(row, column)[0])
+                    else:
+                        notFound += 1
+
+        if notFound == 0:
+            self.solved = True
+        else:
+            self.solved = False
+
+        return 0
+
     def solve(self):
         """Start solving."""
         self.populateUnknown()
+        self.initialClear()
+        self.validate()
 
         return self.toString(False)
 
