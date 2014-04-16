@@ -15,15 +15,17 @@ class Grid():
     def __init__(self, grid):
         self.grid = grid
         self.solved = False
+        self.notFound = 0
+        self.initial = 0
 
     def toString(self, raw):
         """Generate the string representation of the grid."""
         string = 'Status: '
 
         if self.solved == True:
-            string += colors.okgreen+'Solved'+colors.end
+            string += colors.okgreen+'Solved ('+str(self.initial)+')'+colors.end
         else:
-            string += colors.fail+'Unsolved'+colors.end
+            string += colors.fail+'Unsolved ('+str(self.notFound)+'/'+str(self.initial)+')'+colors.end
 
         string += '\n'
 
@@ -62,6 +64,7 @@ class Grid():
             for column in range(9):
                 if not self.isSet(row, column):
                     self.grid[row][column] = list(choices)
+                    self.initial += 1
 
         return 0
 
@@ -106,6 +109,49 @@ class Grid():
 
     def clearSquare(self, row, column, value):
         """Remove value as a possible choice for the square."""
+        rows = []
+        columns = []
+
+        left = top = [0, 1, 2]
+        center = middle = [3, 4, 5]
+        right = bottom = [6, 7, 8]
+
+        #Top rows
+        if row in top and column in left:
+            rows = top
+            columns = left
+        elif row in top and column in center:
+            rows = top
+            columns = center
+        elif row in top and column in right:
+            rows = top
+            columns = right
+        #Middle rows
+        if row in middle and column in left:
+            rows = middle
+            columns = left
+        elif row in middle and column in center:
+            rows = middle
+            columns = center
+        elif row in middle and column in right:
+            rows = middle
+            columns = right
+        #Bottom rows
+        if row in bottom and column in left:
+            rows = bottom
+            columns = left
+        elif row in bottom and column in center:
+            rows = bottom
+            columns = center
+        elif row in bottom and column in right:
+            rows = bottom
+            columns = right
+
+        for y in rows:
+            for x in columns:
+                if not self.isSet(y, x):
+                    self.grid[y][x] = self.removeFromList(self.get(y, x), value)
+        
         return 0
 
     def initialClear(self):
@@ -117,31 +163,38 @@ class Grid():
 
         return 0
 
-    def validate(self):
-        """Remove list of choices with only one choice and check if the grid has been solved."""
-        notFound = 0
-
+    def simplify(self):
+        """Remove list of choices with only one choice and check if the grid has been solved (for now)."""
+        self.notFound = 0
         for row in range(9):
             for column in range(9):
                 if not isinstance(self.get(row, column), int):
                     if len(self.get(row, column)) == 1:
-                        self.grid[row][column] = int(self.get(row, column)[0])
+                        self.setCell(row, column, int(self.get(row, column)[0]))
                     else:
-                        notFound += 1
+                        self.notFound += 1
 
-        if notFound == 0:
+        if self.notFound == 0:
             self.solved = True
         else:
             self.solved = False
 
         return 0
 
+    def validate(self):
+        """Check if the grid has been solved."""
+        return 0
+
     def solve(self):
         """Start solving."""
         self.populateUnknown()
         self.initialClear()
-        self.validate()
-
+        
+        i = 0
+        while i<10 and self.solved == False:
+            self.simplify()
+            i += 1
+        
         return self.toString(False)
 
     def __str__(self):
